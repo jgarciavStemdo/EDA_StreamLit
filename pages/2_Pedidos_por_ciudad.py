@@ -69,7 +69,7 @@ city_stats.sort_values('Número de clientes', ascending=False)
 
 
 
-# REPRESENTACIÓN EN GRÁFICO DE BARRAS
+# REPRESENTACIÓN GRÁFICA --------------------------------------------------------------------------------
 #número de pedidos
 #    - Número de pedidos
 #    - Porcentaje que representan respecto al total de pedidos
