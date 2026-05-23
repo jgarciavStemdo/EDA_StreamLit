@@ -119,18 +119,58 @@ with col2:
 if selected_city != "Todas":
     filtered = filtered[filtered['customer_city'] == selected_city]
 
-#st.bar_chart(data = city_stats.set_index('customer_city')['order_percentage'])
-
 # mostrar gráfico de barras filtrado
-st.subheader("Ratio de pedidos por cliente")
-#st.bar_chart(data=filtered.set_index('customer_city')['orders_per_customer'])
+st.subheader("Porcentaje de pedidos por cliente")
 
-
-# ordenar por ratio
+# ordenar por porcentaje
 filtered = filtered.sort_values('Porcentaje de pedidos', ascending=False)
 top_n = st.slider("Número de ciudades a mostrar", 5, 100, 15)
 top_filtered = filtered.head(top_n)
 st.bar_chart(top_filtered.set_index('customer_city')['Porcentaje de pedidos'])
+
+
+# RATIO DE PEDIDOS
+st.subheader("Ratio de pedidos por cliente")
+# ordenar por ratio
+filtered_ratio = filtered.sort_values('Ratio de pedidos por cliente', ascending=False)
+top_n_ratio = st.slider("Número de ciudades a mostrar (ratio)", 5, 100, 15)
+top_filtered_ratio = filtered.head(top_n_ratio)
+st.bar_chart(top_filtered_ratio.set_index('customer_city')['Ratio de pedidos por cliente'])
+
+
+# RATIO GLOBAL DE PEDIDOS POR CLIENTE
+total_orders = merge_data_to_compare['order_id'].nunique()
+total_customers = merge_data_to_compare['customer_unique_id'].nunique()
+global_orders_per_customer = round(
+    total_orders / total_customers,
+    2
+)
+
+
+st.subheader("KPIs")
+
+# DATAFRAME
+global_stats = pd.DataFrame({
+    'Número total de pedidos': [total_orders],
+    'Número total de clientes': [total_customers],
+    'Ratio global pedidos por cliente': [global_orders_per_customer]
+})
+
+
+#KPIs
+kpi_totapledidos = global_stats['Número total de pedidos']
+kpi_totalclientes = global_stats['Número total de clientes']
+kpi_ratioglobal = global_stats['Ratio global pedidos por cliente'].iloc[0]
+
+k1, k2, k3 = st.columns(3)
+
+with k1:
+    st.metric("Número total de pedidos", global_stats['Número total de pedidos'])
+with k2:
+    st.metric("Número total de clientes", global_stats['Número total de clientes'])
+with k3:
+    st.metric("Ratio global pedidos por cliente", f"{kpi_ratioglobal:.3}%")
+        
 
 
 # tabla filtrada
@@ -148,9 +188,9 @@ st.subheader("Cuestiones")
 
 with st.expander("¿Qué información o patrones se pueden identificar a partir de estos datos?"):
     st.write('''
-        The chart above shows some numbers I picked for you.
-        I rolled actual dice for these, so they're *guaranteed* to
-        be random.
+        - Se puede concluir que, según el ratio de pedidos por cliente, los clientes no suelen repetir compra en la tienda.
+        - 
+        
     ''')
 with st.expander("¿Qué acciones, como analista de datos, crees que debería tomar la empresa para **mejorar sus ventas**?"):
     st.write('''
