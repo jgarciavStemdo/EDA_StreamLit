@@ -94,7 +94,7 @@ st.subheader("Número de reviews por estado")
 st.bar_chart(
     data=reviews_stats,
     x='customer_state',
-    y='num_reviews'
+    y='Número de reviews totales'
 )
 
 
@@ -102,5 +102,5 @@ st.subheader("Score medio de reviews por estado")
 st.bar_chart(
     data=reviews_stats,
     x='customer_state',
-    y='score_medio'
+    y='Media de puntuación'
 )
