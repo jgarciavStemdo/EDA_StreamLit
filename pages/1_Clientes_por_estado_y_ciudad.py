@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 # librería para geolocalización 
 # instalar en environment con pip install streamlit pandas geopy
 from geopy.geocoders import Nominatim
-from geopy.extra.rate_limiter import RateLimiter
+from geopy.extra.rate_limiter import RateLimiter    
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -36,9 +36,9 @@ st.subheader("Filtrado dinámico por fechas de todos los pedidos")
 @st.cache_data
 def load_data():
     # Carga del dataset
-    csv_customers_dataset = pd.read_csv('resources/customers_dataset.csv')
+    csv_customers_dataset = pd.read_csv('streamlit_resources/customers_dataset.csv')
     #st.write(csv_customers_dataset.columns)
-    csv_orders_dataset = pd.read_csv('resources/orders_dataset.csv')
+    csv_orders_dataset = pd.read_csv('streamlit_resources/orders_dataset.csv')
     # Comprobación de nulos en fecha antes del casting
     csv_orders_dataset['order_purchase_timestamp'].isna().any()
     
