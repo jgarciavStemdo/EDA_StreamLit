@@ -3,7 +3,6 @@ import streamlit as st
 st.set_page_config(
     page_title="Dashboard",
     page_icon="📦"
-    #layout="wide"
 )
 
 st.title("📖 Practica final Python")
@@ -17,8 +16,13 @@ st.markdown("""
 2. **Pedidos por ciudad**  
 3. **Análisis de retrasos en pedidos**  
 4. **Reviews y satisfacción del cliente**
+5. **Análisis de pedidos con entrega anticipada**
+
 
 Usa el menú lateral para navegar entre las secciones.
+
+
+*Realizado por: Jorge y María*
 """)
 
 

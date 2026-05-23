@@ -87,7 +87,7 @@ reviews_stats = reviews_by_state.merge(avg_score_by_state, on='customer_state').
 # ============================
 
 st.subheader("Tabla resumen de reviews por estado")
-st.table(reviews_stats)
+st.table(reviews_stats, height=500)
 
 
 st.subheader("Número de reviews por estado")
@@ -103,4 +103,4 @@ st.bar_chart(
     data=reviews_stats,
     x='customer_state',
     y='Media de puntuación'
-)
+)#BA7517
