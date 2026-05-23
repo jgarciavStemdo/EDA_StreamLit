@@ -235,6 +235,35 @@ if df_city['is_late'].sum() != 0:
                        'Pedidos retrasados', 
                        'Porcentaje retrasados', 
                        'Retraso medio en días']])
+    
+    # AUTODIAGNÓSTICO ------------------------------------------------------------------------------
+    st.subheader("Autodiagnóstico del problema")
+    #acumular diagnósticos en array
+    diagnostico = []
+   
+    
+    #reglas y posibles causas
+    if kpi_delay > 10 :
+        diagnostico.append(("error", 
+                            "Retrasos prolongados", 
+                            "Posicles causas: incidencia en el transporte, climatología desfavorable, rutas logísticas mal planteadas."))
+    elif kpi_pct < 10: 
+        diagnostico.append(("success", 
+                            "Rendimiento estable",
+                            "Se detecta un % mínimo de retrasos en los pedidos. No se detectan incidencias relevantes en la entrega."))
+    elif kpi_pct > 30 and kpi_total > 600: 
+         diagnostico.append(("warning", 
+                            "Saturación de demanda",
+                            "La tasa alta de retrasos y el elevado volumen de pedidos puede derivar a una sobrecarga logística e indique que es necesario contar con mayor capacidad de reparto para la demanda indicada. Puede deberse a periodos concretos de tiempo a lo largo del año."))
+    #mostrar diagnósticos acumulados
+    for tipo, titulo, mensaje in diagnostico:
+        if tipo == "error":
+            st.error(f"**{titulo}**\n\n{mensaje}")
+        elif tipo == "warning":
+            st.warning(f"**{titulo}**\n\n{mensaje}")
+        elif tipo == "success":
+            st.success(f"**{titulo}**\n\n{mensaje}")
+    
 else:
     st.info(f"No hay retrasos registrados en {selected_city}")
     
