@@ -65,13 +65,21 @@ on_time_reviews = reviews_products_delivered[
 ]
 
 # Número de reviews por estado
-reviews_by_state = on_time_reviews.groupby('customer_state')['review_score'].count().reset_index(name='num_reviews')
+reviews_by_state = on_time_reviews.groupby('customer_state')['review_score'].count().reset_index()
+
+reviews_by_state = reviews_by_state.rename(columns={
+    'review_score': 'Número de reviews totales'
+})
 
 # Score medio por estado
-avg_score_by_state = on_time_reviews.groupby('customer_state')['review_score'].mean().round(2).reset_index(name='score_medio')
+avg_score_by_state = on_time_reviews.groupby('customer_state')['review_score'].mean().round(2).reset_index()
+
+avg_score_by_state = avg_score_by_state.rename(columns={
+    'review_score':'Media de puntuación'
+})
 
 # Unir métricas
-reviews_stats = reviews_by_state.merge(avg_score_by_state, on='customer_state').sort_values(by='score_medio', ascending=False)
+reviews_stats = reviews_by_state.merge(avg_score_by_state, on='customer_state').sort_values(by='Media de puntuación', ascending=False)
 
 
 # ============================
