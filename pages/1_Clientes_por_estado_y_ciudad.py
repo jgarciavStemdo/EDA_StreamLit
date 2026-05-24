@@ -180,10 +180,13 @@ with mt4:
 # ====================================================================================================
 # AGRUPACIÓN Y FILTRADO DE DATOS
 # ====================================================================================================
+
 dfcustomer_filtrado = df_filtrado.groupby(
     ['customer_state', 'customer_city']
 )['customer_id'].nunique().reset_index().sort_values('customer_id', ascending=False)
+dfcustomer_filtrado = dfcustomer_filtrado.rename(columns={'customer_id': 'num_clientes'})
 
+# DIBUJAR TABLA
 st.table(dfcustomer_filtrado, height=300)
 
 
@@ -201,14 +204,6 @@ def load_coords():
 
 coords_globales = load_coords()
 
-# ====================================================================================================
-# AGRUPACIÓN Y FILTRADO DE CLIENTES
-# ====================================================================================================
-
-dfcustomer_filtrado = df_filtrado.groupby(
-    ['customer_state', 'customer_city']
-)['customer_id'].nunique().reset_index().sort_values('customer_id', ascending=False)
-dfcustomer_filtrado = dfcustomer_filtrado.rename(columns={'customer_id': 'num_clientes'})
 
 # ====================================================================================================
 # CONSTRUCCIÓN DE MAPA
