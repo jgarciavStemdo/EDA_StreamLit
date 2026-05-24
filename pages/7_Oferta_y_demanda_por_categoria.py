@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
+import altair as alt
 
 st.markdown("""
 <div style="
@@ -49,30 +48,29 @@ col1, col2 = st.columns(2)
 with col1:
     st.markdown("##### 3 Categorías más compradas")
     for categoria, n_pedidos in top_3_categorias.items():
-        nombre_limpio = categoria.replace('_', ' ').title()
+        nombre_limpio = categoria.replace('_', ' ')
         st.markdown(f"- **{nombre_limpio}:** {n_pedidos:,} pedidos")
 
 with col2:
     st.markdown("##### 3 Categorías menos compradas")
     for categoria, n_pedidos in bottom_3_categorias.sort_values(ascending=True).items():
-        nombre_limpio = categoria.replace('_', ' ').title()
+        nombre_limpio = categoria.replace('_', ' ')
         st.markdown(f"- **{nombre_limpio}:** {n_pedidos:,} pedidos")
 
 st.markdown("---")
 
 st.header("Selecciona una categoría para un análisis detallado")
 
-lista_categorias = sorted(df['product_category_name_english'].unique())
+lista_categorias = df['product_category_name_english'].unique()
 
 categoria_seleccionada = st.selectbox(
     "Elige una categoría de producto:",
-    lista_categorias,
-    index=lista_categorias.index("computers_accessories")
+    lista_categorias
 )
 
 if categoria_seleccionada:
     
-    st.subheader(f"Análisis para: **{categoria_seleccionada.replace('_', ' ').title()}**")
+    st.subheader(f"Análisis para: **{categoria_seleccionada.replace('_', ' ')}**")
     
     df_categoria = df[df['product_category_name_english'] == categoria_seleccionada]
 
@@ -90,12 +88,14 @@ if categoria_seleccionada:
         top_ciudades_compradoras.rename(columns={'order_id': 'Numero de Pedidos'}, inplace=True)
 
         if not top_ciudades_compradoras.empty:
-            fig_compradores, ax = plt.subplots()
-            sns.barplot(data=top_ciudades_compradoras, x='Numero de Pedidos', y='customer_location', ax=ax, orient='h', palette='viridis')
-            ax.set_title('Top 10 Ciudades Compradoras')
-            ax.set_xlabel('Número de Pedidos')
-            ax.set_ylabel('Ubicación del Comprador')
-            st.pyplot(fig_compradores)
+            chart_compradores = alt.Chart(top_ciudades_compradoras).mark_bar().encode(
+                x=alt.X('Numero de Pedidos:Q', title='Número de Pedidos'),
+                y=alt.Y('customer_location:N', title='Ubicación del Comprador', sort='-x'),
+                tooltip=['customer_location', 'Numero de Pedidos']
+            ).properties(
+                title='Top 10 Ciudades Compradoras'
+            )
+            st.altair_chart(chart_compradores, use_container_width=True)
         else:
             st.info("No hay datos de demanda para esta categoría.")
 
@@ -106,11 +106,13 @@ if categoria_seleccionada:
         top_ciudades_vendedoras.rename(columns={'seller_id': 'Numero de Vendedores'}, inplace=True)
 
         if not top_ciudades_vendedoras.empty:
-            fig_vendedores, ax = plt.subplots()
-            sns.barplot(data=top_ciudades_vendedoras, x='Numero de Vendedores', y='seller_location', ax=ax, orient='h', palette='plasma')
-            ax.set_title('Top 10 Ciudades Vendedoras')
-            ax.set_xlabel('Número de Vendedores Únicos')
-            ax.set_ylabel('Ubicación del Vendedor')
-            st.pyplot(fig_vendedores)
+            chart_vendedores = alt.Chart(top_ciudades_vendedoras).mark_bar().encode(
+                x=alt.X('Numero de Vendedores:Q', title='Número de Vendedores Únicos'),
+                y=alt.Y('seller_location:N', title='Ubicación del Vendedor', sort='-x'),
+                tooltip=['seller_location', 'Numero de Vendedores']
+            ).properties(
+                title='Top 10 Ciudades Vendedoras'
+            )
+            st.altair_chart(chart_vendedores, use_container_width=True)
         else:
             st.info("No hay datos de oferta para esta categoría.")
