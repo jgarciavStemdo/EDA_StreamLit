@@ -105,7 +105,31 @@ df_filtrado = merge_data_to_compare[
     (merge_data_to_compare['order_purchase_timestamp'] <= max_date)
 ]
 
+# ====================================================================================================
+# CLIENTES TOTALES HASTA FECHA FILTRADA
+# ====================================================================================================
 
+clientes_totales_filtrado = df_filtrado['customer_unique_id'].nunique()
+
+st.metric(
+    label=f"Clientes totales hasta {max_date.date()}",
+    value=clientes_totales_filtrado
+)
+
+# ====================================================================================================
+# MEDIA DE CLIENTES POR MES
+# ====================================================================================================
+
+clientes_mensuales = df_filtrado.groupby(
+    df_filtrado['order_purchase_timestamp'].dt.to_period('M')
+)['customer_unique_id'].nunique()
+
+media_clientes_mensual = clientes_mensuales.mean()
+
+st.metric(
+    label="Media de clientes mensuales",
+    value=round(media_clientes_mensual, 2)
+)
 
 # AGRUPACIÓN Y FILTRADO
 dfcustomer_filtrado = df_filtrado.groupby(
