@@ -82,7 +82,7 @@ st.markdown("""
     box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     margin-top: 25px;
     margin-bottom: 25px;">
-    <h2 style="margin-top: 0;">📊 FLUJOS DE COMPRA ENTRE CIUDADES</h2>
+    <h2 style="margin-top: 0;">🌍 FLUJOS DE COMPRA ENTRE CIUDADES</h2>
 </div>
 """, unsafe_allow_html=True)
 
