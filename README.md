@@ -4,7 +4,10 @@ Dashboard interactivo con Streamlit que nos permite explorar y compartir la visu
 
 La aplicación se ha desarrollado en Python utilizando Streamlit para la creación del dashboard, y Pandas para el tratamiento de datasets además de Numpy para el cálculo de datos.
 
-La aplicación se divide en los siguientes apartados:
+##### Enlace a dashboard de streamlit desplegado
+https://eda-maria-jorge.streamlit.app/
+
+# La aplicación se divide en los siguientes apartados:
 
 ## 1. Clientes por estado y ciudad
 Se ofrecen a primera vista cuatro métricas con filtrado de resultados dinámico en función de la fecha:
@@ -75,11 +78,35 @@ Por último, se sugiere un autodiagnóstico del posible problema del retraso en 
 
 
 ## 4. Reviews y satisfacción del cliente
+Se analiza la satisfacción del cliente a través de las reviews. Se calcula el número total de reviews y la puntuación media por estado, excluyendo los pedidos que llegaron con retraso para no sesgar el resultado. Esto permite identificar en qué estados los clientes están más satisfechos con sus compras, independientemente de la logística.
 
+**Análisis de datos:** Permite identificar geográficamente dónde la experiencia de compra (sin contar la entrega) es mejor o peor, ayudando a enfocar mejoras en la calidad del producto o la atención del vendedor.
 
+### Enfoque técnico
+- Se combinan los datasets de pedidos y reviews.
+- Se filtran los datos para excluir los pedidos que llegaron con retraso y así no sesgar la puntuación de satisfacción.
+- Se agrupan los resultados por estado para calcular el número total de reviews y la puntuación media.
 
 ## 5. Análisis de puntualidad en pedidos
+Esta sección se centra en la eficiencia de las entregas. Muestra la media de días de adelanto con la que se entregan los pedidos en cada ciudad. Es un indicador clave para evaluar el rendimiento logístico y la fiabilidad de las fechas de entrega estimadas.
 
+**Análisis de datos:** Un valor alto indica una logística eficiente y una buena experiencia para el cliente. Un valor bajo o negativo en ciertas ciudades puede señalar problemas con los transportistas locales o una mala estimación de los tiempos de entrega.
 
+### Enfoque técnico
+- Se calcula la diferencia en días entre la fecha de entrega real y la estimada.
+- Se filtran los resultados para considerar solo los pedidos con valores positivos (entregados antes de tiempo).
+- Se agrupan los datos por ciudad para calcular la media de días de adelanto en la entrega.
 
 ## 6. Oferta y demanda por categoría
+Se presenta un análisis de la oferta y la demanda por categoría de producto. La página muestra:
+- Un resumen con las 3 categorías más y menos vendidas en todo el marketplace.
+- Un selector para elegir una categoría específica.
+- Para la categoría seleccionada, se muestra el número total de pedidos y dos gráficos: uno con el top 10 de ciudades con más compradores (demanda) y otro con el top 10 de ciudades con más vendedores (oferta).
+
+**Análisis de datos:** Comparar la oferta y la demanda ayuda a identificar oportunidades de mercado. Una alta demanda con baja oferta local sugiere que nuevos vendedores de esa categoría podrían tener éxito en esa ciudad.
+
+### Enfoque técnico
+- Se combinan todos los datasets relevantes (pedidos, productos, clientes, vendedores) para crear una vista de datos unificada.
+- Se realiza una agrupación inicial por categoría de producto para identificar y mostrar las 3 más y menos vendidas.
+- Se implementa un filtro dinámico (`st.selectbox`) para que el usuario elija una categoría.
+- Para la categoría seleccionada, se filtra el dataset y se realizan dos agrupaciones: por ciudad del comprador (demanda) y por ciudad del vendedor (oferta), mostrando el top 10 en gráficos de barras.
