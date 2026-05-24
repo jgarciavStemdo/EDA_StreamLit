@@ -91,8 +91,8 @@ with col2:
     )
 
 
-st.write("Desde: ", min_date)
-st.write("Hasta: ", max_date)
+# st.write("Desde: ", min_date)
+# st.write("Hasta: ", max_date)
 
 # filtro por fechas datetime input
 df_filtrado = merge_data_to_compare[
@@ -107,10 +107,6 @@ df_filtrado = merge_data_to_compare[
 
 clientes_totales_filtrado = df_filtrado['customer_unique_id'].nunique()
 
-st.metric(
-    label=f"Clientes totales hasta {max_date.date()}",
-    value=clientes_totales_filtrado
-)
 
 # ====================================================================================================
 # MEDIA DE CLIENTES POR MES
@@ -122,10 +118,21 @@ clientes_mensuales = df_filtrado.groupby(
 
 media_clientes_mensual = clientes_mensuales.mean()
 
-st.metric(
-    label="Media de clientes mensuales",
-    value=round(media_clientes_mensual, 2)
-)
+
+# REPRESENTACIÓN DE MÉTRICAS EN COLUMNAS
+mt1, mt2 = st.columns(2)
+
+with mt1:
+    st.metric(
+        label=f"Clientes totales hasta {max_date.date()}",
+        value=clientes_totales_filtrado
+    )
+    
+with mt2:
+    st.metric(
+        label="Media de clientes mensuales",
+        value=round(media_clientes_mensual, 2)
+    )
 
 # ====================================================================================================
 # AGRUPACIÓN Y FILTRADO DE DATOS
