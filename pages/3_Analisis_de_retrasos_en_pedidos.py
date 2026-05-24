@@ -3,8 +3,24 @@ import pandas as pd
 #importar librería altair
 import altair as alt
 
+# ====================================================================================================
+# 3. ANÁLISIS DE RETRASOS EN PEDIDOS =================================================================
+# ====================================================================================================
+# Calcula y representa:
+#     - Número de pedidos que llegan tarde por ciudad
+#     - Porcentaje de pedidos retrasados respecto al total de pedidos de la ciudad
+#     - Tiempo medio de retraso en días
 
-# cargar datos
+# Además, al representar esta información, el dashboard deberá incluir un autodiagnóstico que indique
+# la razón más probable del problema.
+
+
+
+
+# ====================================================================================================
+# CARGA DE DATASET EN CACHÉ
+# ====================================================================================================
+
 @st.cache_data
 def load_data():
     csv_customers_dataset = pd.read_csv('streamlit_resources/customers_dataset.csv')
@@ -18,18 +34,7 @@ csv_customers_dataset, csv_orders_dataset, merge_data_to_compare = load_data()
 delivered_orders = merge_data_to_compare[merge_data_to_compare['order_status'] == 'delivered']
 
 
-
-# ====================================================================================================
-# 3. ANÁLISIS DE RETRASOS EN PEDIDOS =================================================================
-# ====================================================================================================
-# Calcula y representa:
-#     - Número de pedidos que llegan tarde por ciudad
-#     - Porcentaje de pedidos retrasados respecto al total de pedidos de la ciudad
-#     - Tiempo medio de retraso en días
-# Además, al representar esta información, el dashboard deberá incluir un autodiagnóstico que indique
-# la razón más probable del problema.
-
-
+# Título
 st.markdown("""
 <div style="
     background-color: #ffffff;
@@ -44,42 +49,64 @@ st.markdown("""
 
 
 
-# Convertir columnas a fecha
+# ====================================================================================================
+# CONVERTIR COLUMNAS A FECHAS
+# ====================================================================================================
+
 delivered_orders['order_delivered_customer_date'] = pd.to_datetime(delivered_orders['order_delivered_customer_date'])
 delivered_orders['order_estimated_delivery_date'] = pd.to_datetime(delivered_orders['order_estimated_delivery_date'])
 
-# Pedidos retrasados
+# ====================================================================================================
+# PEDIDOS RETRASADOS
+# ====================================================================================================
+
 delivered_orders['is_late'] = (delivered_orders['order_delivered_customer_date'].dt.date > delivered_orders['order_estimated_delivery_date'].dt.date)
 
-# Número de pedidos retrasados por ciudad
+# ====================================================================================================
+# NÚMERO DE PEDIDOS RETRASADOS POR CIUDAD
+# ====================================================================================================
+
 late_by_city = delivered_orders.groupby(
     ['customer_state', 'customer_city']
 )['is_late'].sum().reset_index()
 
-# Total de pedidos por ciudad
+# ====================================================================================================
+# TOTAL DE PEDIDOS POR CIUDAD
+# ====================================================================================================
+
 total_by_city = delivered_orders.groupby(
     ['customer_state', 'customer_city']
 )['order_id'].count().reset_index()
 
+# ====================================================================================================
+# MÉTRICAS PRINCIPALES
+# ====================================================================================================
+
+# PORCENTAJE DE RETRASO EN TODOS LOS ESTADOS
 delay_all_stats = total_by_city.merge(late_by_city, on=["customer_state","customer_city"])
 
 delay_all_stats['Porcentaje retrasados'] = (
     delay_all_stats['is_late'] / delay_all_stats['order_id'] * 100
 ).round(2)
 
-# Días de retraso
+# DÍAS DE RETRASO POR PEDIDO
 delivered_orders['delay_days'] = (delivered_orders['order_delivered_customer_date'] - delivered_orders['order_estimated_delivery_date']).dt.days
 
-# Retraso medio por ciudad
+# RETRASO MEDIO POR CIUDAD
 avg_delay_by_city = delivered_orders[delivered_orders['is_late']].groupby(
     ['customer_state', 'customer_city']
 )['delay_days'].mean().reset_index()
+
+# ====================================================================================================
+# MERGE DEL RESULTADO
+# ====================================================================================================
 
 delay_all_stats = delay_all_stats.merge(
     avg_delay_by_city,
     on=['customer_state', 'customer_city'],
 )
 
+# Renombrar columnas de la tabla
 delay_all_stats = delay_all_stats.rename(columns={
     'order_id': 'Total pedidos',
     'is_late': 'Pedidos retrasados',
@@ -90,25 +117,15 @@ delay_all_stats.sort_values(by='Total pedidos',ascending=False)
 
 
 
-
-# REPRESENTACIÓN GRÁFICA --------------------------------------------------------------------------------
+# REPRESENTACIÓN GRÁFICA 
 
 st.subheader("Evolución temporal de retrasos por ciudad")
 
-#st.table(delay_all_stats)
-# st.dataframe(delay_all_stats[['customer_state', 
-#                        'customer_city', 
-#                        'Total pedidos', 
-#                        'Pedidos retrasados', 
-#                        'Porcentaje retrasados', 
-#                        'Retraso medio en días']])
 
-
-
-
-# gráfico 1 ___________________________________________________________________
-#     - Número de pedidos que llegan tarde por ciudad
-# top 15 ciudades con más pedidos
+# ====================================================================================================
+# GRÁFICO 1 - NÚMERO DE PEDIDOS QUE LLEGAN TARDE POR CIUDAD
+# ====================================================================================================
+# Top 15 ciudades con más pedidos
 top_cities = (delay_all_stats.sort_values('Total pedidos', ascending=False).head(15).sort_values('Porcentaje retrasados', ascending=False))
 
 bar_pct = alt.Chart(top_cities).mark_bar().encode(
@@ -122,8 +139,10 @@ bar_pct = alt.Chart(top_cities).mark_bar().encode(
     ]
 )
 
-# gráfico 2 ___________________________________________________________________
-#     - Tiempo medio de retraso en días
+# ====================================================================================================
+# GRÁFICO 2 - TIEMPO MEDIO DE RETRASO EN DÍAS
+# ====================================================================================================
+
 bar_days = alt.Chart(top_cities).mark_bar().encode(
     x=alt.X('Retraso medio en días:Q', title='Días de retraso medio'),
     y=alt.Y('customer_city:N', sort='-x', title='Ciudad'),
@@ -137,7 +156,7 @@ bar_days = alt.Chart(top_cities).mark_bar().encode(
 
 
 
-# pintar gráficos
+# PINTAR GRÁFICO 1 Y 2 EN DOS COLUMNAS
 topporcentaje, topdias = st.columns(2)
 
 with topporcentaje:
@@ -150,10 +169,15 @@ with topdias:
 
 
 
+# ====================================================================================================
+# GRÁFICO 3 - PORCENTAJE DE PEDIDOS RETRASADOS RESPECTO AL TOTAL DE PEDIDOS DE LA CIUDAD
+# ====================================================================================================
 
 st.subheader("Porcentaje de pedidos retrasados respecto al total de pedidos de la ciudad")
 
-# selector para filtrar
+# ====================================================================================================
+# SELECTORES DE FILTRADO
+# ====================================================================================================
 col1, col2 = st.columns(2)
 
 with col1:
@@ -161,7 +185,7 @@ with col1:
     city_stats = sorted(delivered_orders['customer_state'].unique())
     selected_state = st.selectbox("Selecciona un estado", options=["Todos"] + city_stats)
 
-#filtrar por estado
+# FILTRAR CIUDADES SETÚN EL ESTADO SELECCIONADO
 if selected_state != "Todos":
     filtered = delivered_orders[delivered_orders['customer_state'] == selected_state]
 else:
@@ -171,44 +195,51 @@ with col2:
     # selector de ciudad (customer_city) que depende del estado seleccionado
     selected_city = st.selectbox("Selecciona una ciudad", options=["Todas"] + sorted(filtered['customer_city'].unique()))
 
-#filtrar por ciudad
-if selected_city != "Todas":
-    df_city = filtered[filtered['customer_city'] == selected_city]
-else:
-    df_city = filtered.copy()
+# ====================================================================================================
+# FILTRADO GENERAL DE DATOS
+# ====================================================================================================
 
-    
-    
+# DATAFRAME PARA KPIs Y DIAGNÓSTICOS
+df_city = delivered_orders.copy()
 
-# gráfico 3 ___________________________________________________________________
-#     - Porcentaje de pedidos retrasados respecto al total de pedidos de la ciudad
-#usar Altair con doble eje Y (para total de pedidos y para porcentaje sobre esos pedidos)
+# DATAFRAME PARA GRÁFICOS Y TABLAS
+chart_data = delay_all_stats.copy()
 
+
+# filtrar por estado
 if selected_state != "Todos":
-    chart_data = delay_all_stats[delay_all_stats['customer_state'] == selected_state]
-else:
-    chart_data = delay_all_stats.copy()
-    
+    df_city = df_city[df_city['customer_state'] == selected_state]
+    chart_data = chart_data[chart_data['customer_state'] == selected_state]
 
+# filtrar por ciudad
 if selected_city != "Todas":
+    df_city = df_city[df_city['customer_city'] == selected_city]
     chart_data = chart_data[chart_data['customer_city'] == selected_city]
-else:
-    chart_data = chart_data.copy()
-    
-chart_data = chart_data.sort_values('Total pedidos', ascending=False).head(30).copy()
 
+
+# ====================================================================================================
+# PREPARADO DE DATOS PARA REPRESENTACIÓN GRÁFICA
+# ====================================================================================================
+
+# ordenar y sacar los 30 primeros
+chart_data = chart_data.sort_values('Total pedidos', ascending=False).head(30).copy()
 
 # normalizar total de pedidos a escala 100 para comparar con porcentaje
 chart_data['Total pedidos normalizado'] = (chart_data['Total pedidos'] / chart_data['Total pedidos'].max() * 100).round(2)
 
+# ====================================================================================================
+# KPIs PRINCIPALES
+# ====================================================================================================
+
+
 if df_city['is_late'].sum() != 0:
     
-    # KPIs
     kpi_total = len(df_city)
     kpi_late = df_city['is_late'].sum()
     kpi_pct = round((kpi_late / kpi_total) * 100, 2) if kpi_total > 0 else 0
     kpi_delay = round(df_city[df_city['is_late']]['delay_days'].mean(), 2) if kpi_late > 0 else 0
 
+    # Mostrar KPIs en columnas
     k1, k2, k3, k4 = st.columns(4)
     with k1:
         st.metric("Total pedidos", kpi_total)
@@ -219,7 +250,10 @@ if df_city['is_late'].sum() != 0:
     with k4:
         st.metric("Retraso medio (días)", kpi_delay)
         
-    #dibujar gráfico
+    # ====================================================================================================
+    # GRÁFICO
+    # ====================================================================================================
+
     st.bar_chart(chart_data,
         x='customer_city',
         y=['Porcentaje retrasados', 'Total pedidos normalizado'],
@@ -228,7 +262,11 @@ if df_city['is_late'].sum() != 0:
         x_label='Ciudad',
         y_label='*Se muestran las 30 ciudades con mayor número de pedidos. Cifra normalizada a escala 0-100'
     )
-    #dibujar tabla
+    
+    # ====================================================================================================
+    # TABLA RESUMEN
+    # ====================================================================================================
+    
     st.dataframe(chart_data[['customer_state', 
                        'customer_city', 
                        'Total pedidos', 
@@ -236,13 +274,16 @@ if df_city['is_late'].sum() != 0:
                        'Porcentaje retrasados', 
                        'Retraso medio en días']])
     
-    # AUTODIAGNÓSTICO ------------------------------------------------------------------------------
+    # ====================================================================================================
+    # AUTODIAGNÓSTICO
+    # ====================================================================================================
+
     st.subheader("Autodiagnóstico del problema")
-    #acumular diagnósticos en array
+    # acumular diagnósticos en array
     diagnostico = []
    
     
-    #reglas y posibles causas
+    # Reglas y posibles causas
     if kpi_delay > 10 :
         diagnostico.append(("error", 
                             "Retrasos prolongados", 
@@ -255,7 +296,7 @@ if df_city['is_late'].sum() != 0:
          diagnostico.append(("warning", 
                             "Saturación de demanda",
                             "La tasa alta de retrasos y el elevado volumen de pedidos puede derivar a una sobrecarga logística e indique que es necesario contar con mayor capacidad de reparto para la demanda indicada. Puede deberse a periodos concretos de tiempo a lo largo del año."))
-    #mostrar diagnósticos acumulados
+    # Mostrar diagnósticos acumulados
     for tipo, titulo, mensaje in diagnostico:
         if tipo == "error":
             st.error(f"**{titulo}**\n\n{mensaje}")

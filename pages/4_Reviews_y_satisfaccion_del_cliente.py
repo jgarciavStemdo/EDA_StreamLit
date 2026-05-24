@@ -2,7 +2,25 @@ import streamlit as st
 import pandas as pd
 import altair as alt
 
-# cargar datos 
+# ====================================================================================================
+# 4. REVIEWS Y SATISFACCIÓN DEL CLIENTE ==============================================================
+# ====================================================================================================
+# Calcula y representa:
+#     - Número de reviews por estado
+#     - Score medio de las reviews en cada estado
+#
+# Para este cálculo, se deberán excluir los pedidos con retraso, 
+# ya que se entiende que la valoración negativa podría deberse principalmente 
+# al retraso en la entrega del producto.
+
+# Esto serán las métricas que tendrá que tener en el ejercicio calculadas 
+# y representadas como mínimo, puedes añadir todas las que veas interesantes!
+
+
+# ====================================================================================================
+# CARGA DE DATASET EN CACHÉ
+# ====================================================================================================
+
 @st.cache_data
 def load_data():
     csv_customers_dataset = pd.read_csv('streamlit_resources/customers_dataset.csv')
@@ -23,20 +41,7 @@ delivered_orders['delay_days'] = (
 delivered_orders['is_late'] = delivered_orders['delay_days'] > 0
 
 
-# ====================================================================================================
-# 4. REVIEWS Y SATISFACCIÓN DEL CLIENTE ==============================================================
-# ====================================================================================================
-# Calcula y representa:
-#     - Número de reviews por estado
-#     - Score medio de las reviews en cada estado
-#
-# Para este cálculo, se deberán excluir los pedidos con retraso, 
-# ya que se entiende que la valoración negativa podría deberse principalmente 
-# al retraso en la entrega del producto.
-
-# Esto serán las métricas que tendrá que tener en el ejercicio calculadas 
-# y representadas como mínimo, puedes añadir todas las que veas interesantes!
-
+# TÍTULO
 st.markdown("""
 <div style="
     background-color: #ffffff;
@@ -50,9 +55,9 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-# ============================
+# ====================================================================================================
 # CÁLCULO DE MÉTRICAS
-# ============================
+# ====================================================================================================
 
 reviews_products_delivered = delivered_orders.merge(
     csv_reviews_dataset[['order_id', 'review_score']],
@@ -82,14 +87,15 @@ avg_score_by_state = avg_score_by_state.rename(columns={
 reviews_stats = reviews_by_state.merge(avg_score_by_state, on='customer_state').sort_values(by='Media de puntuación', ascending=False)
 
 
-# ============================
+# ====================================================================================================
 # REPRESENTACIÓN STREAMLIT
-# ============================
-
+# ====================================================================================================
 st.subheader("Tabla resumen de reviews por estado")
+
+# TABLA
 st.table(reviews_stats, height=500)
 
-
+# GRÁFICO NÚMERO DE REVIEWS POR ESTADO
 st.subheader("Número de reviews por estado")
 st.bar_chart(
     data=reviews_stats,
@@ -97,10 +103,11 @@ st.bar_chart(
     y='Número de reviews totales'
 )
 
-
+# GRÁFICO SCORE MEDIO DE REVIEWS POR ESTADO
 st.subheader("Score medio de reviews por estado")
 st.bar_chart(
     data=reviews_stats,
     x='customer_state',
     y='Media de puntuación'
-)#BA7517
+)
+

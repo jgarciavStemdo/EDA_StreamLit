@@ -7,6 +7,11 @@ from streamlit_folium import st_folium
 from geopy.geocoders import Nominatim
 from geopy.extra.rate_limiter import RateLimiter
 
+
+# ====================================================================================================
+# CARGA DE DATASET EN CACHÉ
+# ====================================================================================================
+
 @st.cache_data
 def load_data():
 
@@ -68,8 +73,20 @@ def geocodificar(ciudades):
 # MAPA
 # ====================================================================================================
 
-st.subheader("Flujos de compra entre ciudades")
+# Título
+st.markdown("""
+<div style="
+    background-color: #ffffff;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    margin-top: 25px;
+    margin-bottom: 25px;">
+    <h2 style="margin-top: 0;">📊 FLUJOS DE COMPRA ENTRE CIUDADES</h2>
+</div>
+""", unsafe_allow_html=True)
 
+# Top 150 rutas
 top_routes = seller_customer_flow.head(150)
 
 ciudades = tuple(

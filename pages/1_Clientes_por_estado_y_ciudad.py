@@ -1,5 +1,7 @@
 import streamlit as st
 import pandas as pd
+
+import datetime
 from datetime import datetime, timedelta
 # librería para geolocalización
 # instalar en environment con pip install streamlit pandas geopy
@@ -17,26 +19,18 @@ from streamlit_folium import st_folium
 # ====================================================================================================
 # 1. CLIENTES POR ESTADO Y CIUDAD ====================================================================
 # ====================================================================================================
+# Representa una clasificación del número de clientes por estado. Crea una tabla en la que se muestren:
+#    - Estado
+#    - Ciudad
+#    - Número de clientes por ciudad
+# Tanto la tabla como los gráficos deberán ser dinámicos respecto a la fecha para permitir el
+# análisis temporal de la evolución de clientes.
 
 
-#titulo
-st.markdown("""
-<div style="
-    background-color: #ffffff;
-    padding: 25px;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    margin-top: 25px;
-    margin-bottom: 25px;">
-    <h2 style="margin-top: 0;">📊 CLIENTES POR ESTADO Y CIUDAD</h2>
-</div>
-""", unsafe_allow_html=True)
+# ====================================================================================================
+# CARGA DE DATASET EN CACHÉ
+# ====================================================================================================
 
-
-st.subheader("Filtrado dinámico por fechas de todos los pedidos")
-
-
-# CARGA DE DATOS CACHEADA
 @st.cache_data
 def load_data():
     # Carga del dataset
@@ -51,32 +45,33 @@ def load_data():
 
     merge_data_to_compare = pd.merge(csv_orders_dataset,csv_customers_dataset, on='customer_id')
 
-    # '''
-    # Para realizar el filtro tomamos la fecha de compra desde orders_dataset, para compararlo con la fecha actual.
-    # '''
-
-
-    # delivered_orders = merge_data_to_compare[merge_data_to_compare['order_status'] == 'delivered']
-
-    # customers_by_city_state = csv_customers_dataset.groupby(
-    #     ['customer_state', 'customer_city']
-    # )['customer_id'].nunique().reset_index()
-
-    # customers_by_city_state.sort_values('customer_unique_id',ascending=False)
-    # dfcustomer = customers_by_city_state.sort_values('customer_unique_id',ascending=False)
-
-
     return csv_customers_dataset, csv_orders_dataset, merge_data_to_compare
 csv_customers_dataset, csv_orders_dataset, merge_data_to_compare = load_data()
 
+# Título
+st.markdown("""
+<div style="
+    background-color: #ffffff;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    margin-top: 25px;
+    margin-bottom: 25px;">
+    <h2 style="margin-top: 0;">📊 CLIENTES POR ESTADO Y CIUDAD</h2>
+</div>
+""", unsafe_allow_html=True)
 
-# SLIDE CON RANGO DE FECHAS
+# ====================================================================================================
+# SELECTORES DE RANGO DE FECHA
+# ====================================================================================================
+
+st.subheader("Filtrado dinámico por fechas de todos los pedidos")
+
+# Obtener fecha máxima y mínima del dataset
 minima = merge_data_to_compare['order_purchase_timestamp'].min().to_pydatetime()
 maxima = merge_data_to_compare['order_purchase_timestamp'].max().to_pydatetime()
 
-# FILTRO DECHAS DATETIME INPUT (seleccionador de fechas mostrado en dos columnas)
-import datetime
-
+# Seleccionador de fechas mostrado en dos columnas
 col1, col2 = st.columns(2)
 
 with col1:
@@ -106,8 +101,35 @@ df_filtrado = merge_data_to_compare[
 ]
 
 
+# ====================================================================================================
+# CLIENTES TOTALES HASTA FECHA FILTRADA
+# ====================================================================================================
 
-# AGRUPACIÓN Y FILTRADO
+clientes_totales_filtrado = df_filtrado['customer_unique_id'].nunique()
+
+st.metric(
+    label=f"Clientes totales hasta {max_date.date()}",
+    value=clientes_totales_filtrado
+)
+
+# ====================================================================================================
+# MEDIA DE CLIENTES POR MES
+# ====================================================================================================
+
+clientes_mensuales = df_filtrado.groupby(
+    df_filtrado['order_purchase_timestamp'].dt.to_period('M')
+)['customer_unique_id'].nunique()
+
+media_clientes_mensual = clientes_mensuales.mean()
+
+st.metric(
+    label="Media de clientes mensuales",
+    value=round(media_clientes_mensual, 2)
+)
+
+# ====================================================================================================
+# AGRUPACIÓN Y FILTRADO DE DATOS
+# ====================================================================================================
 dfcustomer_filtrado = df_filtrado.groupby(
     ['customer_state', 'customer_city']
 )['customer_id'].nunique().reset_index().sort_values('customer_id', ascending=False)
@@ -115,13 +137,10 @@ dfcustomer_filtrado = df_filtrado.groupby(
 st.table(dfcustomer_filtrado, height=300)
 
 
+# ====================================================================================================
+# GEOLOCALIZACIÓN CACHE
+# ====================================================================================================
 
-# MAPA AÑADIDO ----------------------------------------------------------------------------------
-# https://www.youtube.com/watch?v=gWV1gbeB-IM
-# https://github.com/clint-kristopher-morris/Tutorials/blob/main/streamlit-part-1/app.py
-
-
-# GEOLOCALIZACIÓN CACHEADA
 @st.cache_data
 def geocodificar_ciudades(ciudades_estados):
     geolocator = Nominatim(user_agent="streamlit_dashboard")
@@ -137,12 +156,20 @@ def geocodificar_ciudades(ciudades_estados):
             pass
     return coords
 
-# AGRUPACIÓN
+# ====================================================================================================
+# AGRUPACIÓN Y FILTRADO DE CLIENTES
+# ====================================================================================================
+
 dfcustomer_filtrado = df_filtrado.groupby(
     ['customer_state', 'customer_city']
 )['customer_id'].nunique().reset_index().sort_values('customer_id', ascending=False)
 dfcustomer_filtrado = dfcustomer_filtrado.rename(columns={'customer_id': 'num_clientes'})
 
+# ====================================================================================================
+# CONSTRUCCIÓN DE MAPA
+# ====================================================================================================
+# https://www.youtube.com/watch?v=gWV1gbeB-IM
+# https://github.com/clint-kristopher-morris/Tutorials/blob/main/streamlit-part-1/app.py
 
 def construir_mapa(ciudades_estados, max_clientes, filas):
     # Selector del tipo de mapa a pintar

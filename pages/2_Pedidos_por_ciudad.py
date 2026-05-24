@@ -18,7 +18,6 @@ csv_customers_dataset, csv_orders_dataset, merge_data_to_compare = load_data()
 # ====================================================================================================
 # 2. PEDIDOS POR CIUDAD ==============================================================================
 # ====================================================================================================
-
 # A la tabla anterior añade las siguientes columnas:
 #    - Número de pedidos
 #    - Porcentaje que representan respecto al total de pedidos
