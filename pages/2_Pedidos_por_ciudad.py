@@ -149,6 +149,9 @@ global_orders_per_customer = round(
 )
 
 
+# ====================================================================================================
+# MÉTRICAS ADICIONALES
+# ====================================================================================================
 st.subheader("KPIs")
 
 # DATAFRAME
@@ -158,11 +161,6 @@ global_stats = pd.DataFrame({
     'Ratio global pedidos por cliente': [global_orders_per_customer]
 })
 
-
-# ====================================================================================================
-# MÉTRICAS ADICIONALES
-# ====================================================================================================
- 
 kpi_totapledidos = global_stats['Número total de pedidos']
 kpi_totalclientes = global_stats['Número total de clientes']
 kpi_ratioglobal = global_stats['Ratio global pedidos por cliente'].iloc[0]
@@ -178,7 +176,10 @@ with k3:
         
 
 
-# tabla filtrada
+# ====================================================================================================
+# TABLA FILTRADA
+# ====================================================================================================
+
 st.subheader("Datos filtrados (tabla)")
 st.dataframe(filtered[['customer_state', 
                        'customer_city', 
