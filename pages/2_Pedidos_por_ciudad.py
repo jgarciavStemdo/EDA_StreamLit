@@ -1,20 +1,6 @@
 import streamlit as st
 import pandas as pd
 
-
-# cargar datos 
-@st.cache_data
-def load_data():
-    csv_customers_dataset = pd.read_csv('streamlit_resources/customers_dataset.csv')
-    csv_orders_dataset = pd.read_csv('streamlit_resources/orders_dataset.csv')
-    csv_orders_dataset['order_purchase_timestamp'] = pd.to_datetime(csv_orders_dataset['order_purchase_timestamp'])
-    merge_data_to_compare = pd.merge(csv_orders_dataset, csv_customers_dataset, on='customer_id')
-    return csv_customers_dataset, csv_orders_dataset, merge_data_to_compare
-
-csv_customers_dataset, csv_orders_dataset, merge_data_to_compare = load_data()
-
-
-
 # ====================================================================================================
 # 2. PEDIDOS POR CIUDAD ==============================================================================
 # ====================================================================================================
@@ -28,7 +14,26 @@ csv_customers_dataset, csv_orders_dataset, merge_data_to_compare = load_data()
 # ¿Qué acciones, como analista de datos, crees que debería tomar la empresa para mejorar sus ventas?
 
 
+# ====================================================================================================
+# CARGA DE DATASET EN CACHÉ
+# ====================================================================================================
+ 
+@st.cache_data
+def load_data():
+    csv_customers_dataset = pd.read_csv('streamlit_resources/customers_dataset.csv')
+    csv_orders_dataset = pd.read_csv('streamlit_resources/orders_dataset.csv')
+    csv_orders_dataset['order_purchase_timestamp'] = pd.to_datetime(csv_orders_dataset['order_purchase_timestamp'])
+    merge_data_to_compare = pd.merge(csv_orders_dataset, csv_customers_dataset, on='customer_id')
+    return csv_customers_dataset, csv_orders_dataset, merge_data_to_compare
 
+csv_customers_dataset, csv_orders_dataset, merge_data_to_compare = load_data()
+
+
+
+# ====================================================================================================
+# PEDIDOS AGRUPADOS POR CIUDAD Y NÚMERO DE CLIENTES
+# ====================================================================================================
+ 
 orders_by_city = merge_data_to_compare.groupby(
     ['customer_state', 'customer_city']
 )['order_id'].count().reset_index()
@@ -66,13 +71,9 @@ city_stats = city_stats.rename(columns={
 city_stats.sort_values('Número de clientes', ascending=False)
 
 
-
-
-# REPRESENTACIÓN GRÁFICA --------------------------------------------------------------------------------
-#número de pedidos
-#    - Número de pedidos
-#    - Porcentaje que representan respecto al total de pedidos
-
+# ====================================================================================================
+# REPRESENTACIÓN GRÁFICA
+# ====================================================================================================
 
 #titulo
 st.markdown("""
@@ -89,13 +90,9 @@ st.markdown("""
 
 
 
-# dibujar tabla completa
-#st.table(city_stats, height=300)
-
-# dibujar gráfico de barras -----------------------------------------------------------------------
-
-# calcular ratio
-#city_stats['orders_per_customer'] = city_stats['order_id'] / city_stats['customer_id']
+# ====================================================================================================
+# GRÁFICO - PORCENTAJE DE PEDIDOS POR CLIENTE
+# ====================================================================================================
 
 # selector para filtrar
 col1, col2 = st.columns(2)
@@ -128,7 +125,10 @@ top_filtered = filtered.head(top_n)
 st.bar_chart(top_filtered.set_index('customer_city')['Porcentaje de pedidos'])
 
 
-# RATIO DE PEDIDOS
+# ====================================================================================================
+# GRÁFICO - RATIO DE PEDIDOS POR CLIENTE
+# ====================================================================================================
+ 
 st.subheader("Ratio de pedidos por cliente")
 # ordenar por ratio
 filtered_ratio = filtered.sort_values('Ratio de pedidos por cliente', ascending=False)
@@ -137,7 +137,10 @@ top_filtered_ratio = filtered.head(top_n_ratio)
 st.bar_chart(top_filtered_ratio.set_index('customer_city')['Ratio de pedidos por cliente'])
 
 
+# ====================================================================================================
 # RATIO GLOBAL DE PEDIDOS POR CLIENTE
+# ====================================================================================================
+ 
 total_orders = merge_data_to_compare['order_id'].nunique()
 total_customers = merge_data_to_compare['customer_unique_id'].nunique()
 global_orders_per_customer = round(
@@ -156,7 +159,10 @@ global_stats = pd.DataFrame({
 })
 
 
-#KPIs
+# ====================================================================================================
+# MÉTRICAS ADICIONALES
+# ====================================================================================================
+ 
 kpi_totapledidos = global_stats['Número total de pedidos']
 kpi_totalclientes = global_stats['Número total de clientes']
 kpi_ratioglobal = global_stats['Ratio global pedidos por cliente'].iloc[0]
@@ -182,18 +188,28 @@ st.dataframe(filtered[['customer_state',
                        'Ratio de pedidos por cliente']])
 
 
-# Preguntas
+# ====================================================================================================
+# CUESTIONES
+# ====================================================================================================
+ 
 st.subheader("Cuestiones")
 
 with st.expander("¿Qué información o patrones se pueden identificar a partir de estos datos?"):
     st.write('''
-        - Se puede concluir que, según el ratio de pedidos por cliente, los clientes no suelen repetir compra en la tienda.
-        - 
+        - Teniendo en cuenta que el ratio total entre clientes y pedidos es de 1.03, 
+        quiere decir que los clientes no piden una segunda vez pese a tener valoraciones 
+        muy positivas respecto a los productos, algunas ciudades tienen un porcentaje de 
+        pedidos retrasados alto con respecto al total de pedidos de la ciudad, 
+        esto puede deberse a múltiples factores como la accesibilidad a la zona geográfica, 
+        falta de logística propia (subcontratando el reparto a diversas empresa, dependiendo del estado o ciudad).
+        - La empresa no se enfoca en ninguna industria o producto concreto, lo que puede llegar a explicar su 
+        volumen de compra y la decisión de los clientes de no repetir su compra.
         
     ''')
 with st.expander("¿Qué acciones, como analista de datos, crees que debería tomar la empresa para **mejorar sus ventas**?"):
     st.write('''
-        The chart above shows some numbers I picked for you.
-        I rolled actual dice for these, so they're *guaranteed* to
-        be random.
+        - Inversión en marketing: Se puede hacer una campaña de recomendación de productos complementarios personalizada
+        para cada cliente según el producto o productos que hayan adquirido. 
+        - Mejora del sistema de logística en localizaciones menos accesibles.
+        - Mejorar la retención de los clientes. Investigar la causa real de por qué un cliente no repite compra.
     ''')

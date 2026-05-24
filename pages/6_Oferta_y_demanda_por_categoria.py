@@ -14,6 +14,10 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
+# ====================================================================================================
+# CARGA DE DATASET EN CACHÉ
+# ====================================================================================================
+ 
 @st.cache_data
 def load_data():
     df_customers = pd.read_csv('streamlit_resources/customers_dataset.csv')
@@ -36,10 +40,18 @@ def load_data():
 
 df = load_data()
 
+# ====================================================================================================
+# AGRUPAR PEDIDOS POR CATEGORÍA
+# ====================================================================================================
+
 st.markdown("#### Resumen General de Ventas por Categoría")
 
 pedidos_por_categoria = df.groupby('product_category_name_english')['order_id'].nunique().sort_values(ascending=False)
 
+# ====================================================================================================
+# TOP 3 CATEGORÍAS MÁS Y MENOS COMPRADAS
+# ====================================================================================================
+ 
 top_3_categorias = pedidos_por_categoria.head(3)
 bottom_3_categorias = pedidos_por_categoria.tail(3)
 
@@ -58,6 +70,10 @@ with col2:
         st.markdown(f"- **{nombre_limpio}:** {n_pedidos:,} pedidos")
 
 st.markdown("---")
+
+# ====================================================================================================
+# ANÁLISIS DETALLADO
+# ====================================================================================================
 
 st.header("Selecciona una categoría para un análisis detallado")
 
@@ -82,6 +98,11 @@ if categoria_seleccionada:
     col_graf1, col_graf2 = st.columns(2)
 
     with col_graf1:
+        
+        # ====================================================================================================
+        # GRÁFICO DEMANDA
+        # ====================================================================================================
+        
         st.markdown("#### 🛍️ Demanda: Top 10 Ciudades Compradoras")
         
         top_ciudades_compradoras = df_categoria.groupby('customer_location')['order_id'].nunique().nlargest(10).reset_index()
@@ -100,6 +121,11 @@ if categoria_seleccionada:
             st.info("No hay datos de demanda para esta categoría.")
 
     with col_graf2:
+        
+        # ====================================================================================================
+        # GRÁFICO OFERTA
+        # ====================================================================================================
+        
         st.markdown("#### 📈 Oferta: Top 10 Ciudades Vendedoras")
         
         top_ciudades_vendedoras = df_categoria.groupby('seller_location')['seller_id'].nunique().nlargest(10).reset_index()

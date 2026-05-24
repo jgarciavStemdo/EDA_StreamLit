@@ -17,7 +17,7 @@ st.markdown("""
 3. **Análisis de retrasos en pedidos**  
 4. **Reviews y satisfacción del cliente**
 5. **Análisis de pedidos con entrega anticipada**
-6. **Flujo de compra entre ciudades**
+6. **Oferta y demanda por categoría**
 
 
 Usa el menú lateral para navegar entre las secciones.
