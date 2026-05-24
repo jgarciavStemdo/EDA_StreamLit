@@ -3,10 +3,6 @@ import pandas as pd
 
 import datetime
 from datetime import datetime, timedelta
-# librería para geolocalización
-# instalar en environment con pip install streamlit pandas geopy
-from geopy.geocoders import Nominatim
-from geopy.extra.rate_limiter import RateLimiter
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -94,7 +90,10 @@ with col2:
 # st.write("Desde: ", min_date)
 # st.write("Hasta: ", max_date)
 
-# filtro por fechas datetime input
+# ====================================================================================================
+# FILTRADO DE DATOS POR FECHAS
+# ====================================================================================================
+
 df_filtrado = merge_data_to_compare[
     (merge_data_to_compare['order_purchase_timestamp'] >= min_date) &
     (merge_data_to_compare['order_purchase_timestamp'] <= max_date)
@@ -108,30 +107,74 @@ df_filtrado = merge_data_to_compare[
 clientes_totales_filtrado = df_filtrado['customer_unique_id'].nunique()
 
 
+
 # ====================================================================================================
-# MEDIA DE CLIENTES POR MES
+# CLIENTES ACTIVOS POR DÍA EN EL RANGO SELECCIONADO
 # ====================================================================================================
 
-clientes_mensuales = df_filtrado.groupby(
-    df_filtrado['order_purchase_timestamp'].dt.to_period('M')
-)['customer_unique_id'].nunique()
+clientes_diarios = df_filtrado.groupby(df_filtrado['order_purchase_timestamp'].dt.date)['customer_unique_id'].nunique()
 
-media_clientes_mensual = clientes_mensuales.mean()
+media_clientes_diaria = clientes_diarios.mean()
+
+rango_dias = (max_date - min_date).days + 1
 
 
+# ====================================================================================================
+# CLIENTES NUEVOS EN EL PERIODO SELECCIONADO
+# ====================================================================================================
+
+cliente_primer_pedido = (merge_data_to_compare.groupby('customer_unique_id')['order_purchase_timestamp'].min().reset_index())
+
+# Clientes nuevos en el rango de fecha filtrado
+clientes_nuevos = cliente_primer_pedido[
+    (cliente_primer_pedido['order_purchase_timestamp'] >= min_date) &
+    (cliente_primer_pedido['order_purchase_timestamp'] <= max_date)
+]
+
+# total de clientes nuevos en el periodo
+total_clientes_nuevos = clientes_nuevos['customer_unique_id'].nunique()
+
+
+# ====================================================================================================
+# MEDIA DIARIA DE CLIENTES NUEVOS EN EL PERIODO SELECCIONADO
+# ====================================================================================================
+
+clientes_nuevos_diarios = clientes_nuevos.groupby(clientes_nuevos['order_purchase_timestamp'].dt.date)['customer_unique_id'].nunique()
+
+# media mensual de clientes nuevos
+media_clientes_nuevos = clientes_nuevos_diarios.mean()
+
+
+# ====================================================================================================
 # REPRESENTACIÓN DE MÉTRICAS EN COLUMNAS
+# ====================================================================================================
 mt1, mt2 = st.columns(2)
 
 with mt1:
     st.metric(
-        label=f"Clientes totales hasta {max_date.date()}",
+        label=f"Clientes únicos activos de {min_date.date()} a {max_date.date()}",
         value=clientes_totales_filtrado
     )
     
 with mt2:
     st.metric(
-        label="Media de clientes mensuales",
-        value=round(media_clientes_mensual, 2)
+        label=f"Media diaria de clientes ativos ({rango_dias} días)",
+        value=round(media_clientes_diaria, 2)
+    )
+    
+
+mt3, mt4 = st.columns(2)
+  
+with mt3:
+    st.metric(
+        label=f"Clientes nuevos de {min_date.date()} a {max_date.date()}",
+        value=total_clientes_nuevos
+    )
+    
+with mt4:
+    st.metric(
+        label=f"Media diaria de clientes nuevos ({rango_dias} días)",
+        value=round(media_clientes_nuevos, 2)
     )
 
 # ====================================================================================================
@@ -145,23 +188,18 @@ st.table(dfcustomer_filtrado, height=300)
 
 
 # ====================================================================================================
-# GEOLOCALIZACIÓN CACHE
+# CARGA DE COORDENADAS DESDE CSV GENERADO EN generar_coordenadas.py
 # ====================================================================================================
 
 @st.cache_data
-def geocodificar_ciudades(ciudades_estados):
-    geolocator = Nominatim(user_agent="streamlit_dashboard")
-    geocode = RateLimiter(geolocator.geocode, min_delay_seconds=1)
+def load_coords():
+    df = pd.read_csv('streamlit_resources/cities_coords.csv').dropna(subset=['lat', 'lon'])
+    return {
+        (row['customer_city'], row['customer_state']): (row['lat'], row['lon'])
+        for _, row in df.iterrows()
+    }
 
-    coords = {}
-    for ciudad, estado in ciudades_estados:
-        try:
-            location = geocode(f"{ciudad}, Brazil")
-            if location:
-                coords[(ciudad, estado)] = (location.latitude, location.longitude)
-        except Exception:
-            pass
-    return coords
+coords_globales = load_coords()
 
 # ====================================================================================================
 # AGRUPACIÓN Y FILTRADO DE CLIENTES
@@ -178,19 +216,18 @@ dfcustomer_filtrado = dfcustomer_filtrado.rename(columns={'customer_id': 'num_cl
 # https://www.youtube.com/watch?v=gWV1gbeB-IM
 # https://github.com/clint-kristopher-morris/Tutorials/blob/main/streamlit-part-1/app.py
 
-def construir_mapa(ciudades_estados, max_clientes, filas):
+def construir_mapa(max_clientes, filas):
     # Selector del tipo de mapa a pintar
     tipo_mapa = st.selectbox( "Tipo de mapa", ["cartodbpositron", "cartodbdark_matter", "OpenStreetMap"] )
     
     m = folium.Map(location=[-14.235, -51.925], zoom_start=4, tiles=tipo_mapa)
-    coords = geocodificar_ciudades(ciudades_estados)
 
     for ciudad, estado, num in filas:
         key = (ciudad, estado)
-        if key not in coords:
+        if key not in coords_globales:
             continue
 
-        lat, lon = coords[key]
+        lat, lon = coords_globales[key]
         radio = 5 + (num / max_clientes) * 25
 
         if num > max_clientes * 0.5:
@@ -213,21 +250,16 @@ def construir_mapa(ciudades_estados, max_clientes, filas):
 
     return m
 
-st.subheader("Mapa de distribución de clientes por ciudad (top 100)")
+st.subheader("Mapa de distribución de clientes por ciudad")
 
 # Filtrado de mapa para ver n ciudades top por número de clientes
-#top_n = st.slider("Número de ciudades con más clientes a mostrar", 5, 400, 100)
-top_ciudades = dfcustomer_filtrado.head(100)
+top_n = st.slider("Número de ciudades con más clientes a mostrar", 5, 4500, 100)
+top_ciudades = dfcustomer_filtrado.head(top_n)
 max_clientes = dfcustomer_filtrado['num_clientes'].max()
-# con tuple se cachea el resultado 
-pares_ciudad_estado = tuple(zip(top_ciudades['customer_city'], top_ciudades['customer_state']))
-with st.spinner("Cargando mapa..."):
-    coords = geocodificar_ciudades(pares_ciudad_estado)
 
 filas = tuple(zip(top_ciudades['customer_city'], top_ciudades['customer_state'], top_ciudades['num_clientes']))
 
-m = construir_mapa(pares_ciudad_estado, max_clientes, filas)
-
+m = construir_mapa(max_clientes, filas)
 map_data = st_folium(m, height=500, use_container_width=True)
 
 
