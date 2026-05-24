@@ -89,13 +89,13 @@ def construir_mapa(df, coords):
 
     m = folium.Map(location=[-14.235, -51.925], zoom_start=4, tiles=tipo_mapa)
 
-    max_pedidos = df['num_pedidos'].max()
+    max_pedidos = df['Número de pedidos'].max()
 
     for _, row in df.iterrows():
 
         origen = row['seller_city']
         destino = row['customer_city']
-        peso = row['num_pedidos']
+        peso = row['Número de pedidos']
 
         if origen not in coords or destino not in coords:
             continue
